@@ -620,7 +620,7 @@ PanoramaTreeView.prototype = {
       } else
         item.children.forEach(function(child){ if (!child.tab.selected){ tabs.push(child.tab); } });
     }
-    if (tabs.lnegth === 0)
+    if (tabs.length === 0)
       return;
 
     var activeGroupItem = this.GI._activeGroupItem;
@@ -1029,7 +1029,7 @@ PanoramaTreeView.prototype = {
         this.rows.splice(changeIndex, 0, new TabItem(tab));
       }
     } else if (tab.pinned) {
-      changeIndex = i + tab._tPos;
+      changeIndex = 1 + tab._tPos;
       this.rows.splice(changeIndex, 0, new TabItem(tab));
     }
     this.treeBox.rowCountChanged(changeIndex, 1);
@@ -1204,7 +1204,7 @@ PanoramaTreeView.prototype = {
     else if (types.contains(PlacesUtils.TYPE_X_MOZ_URL))
       this.dropURL(aTargetIndex, aOrientation, aDataTransfer);
     else
-      this.dropTabs(aTargetIndex, aOrientation, aDataTransfer)
+      this.dropTabs(aTargetIndex, aOrientation, aDataTransfer);
 
   },
   selection: null,
@@ -1280,7 +1280,7 @@ PanoramaTreeView.prototype = {
   cycleCell: function PTV_cycleCell (aRow, aColumn) {},
   isEditable: function PTV_isEditable (aRow, aColumn) {
     if (aColumn.element.getAttribute("anonid") === "title")
-      return (this.rows[aRow] instanceof GroupItem)
+      return (this.rows[aRow] instanceof GroupItem);
 
     return true;
   },

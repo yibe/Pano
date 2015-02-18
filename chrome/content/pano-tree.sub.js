@@ -160,7 +160,7 @@ var tooltip = {
 var contextMenu = {
   get newTabElm () {
     var elm = document.getElementById("panoContextMenu_newTab");
-    delete this.newTabElm
+    delete this.newTabElm;
     return this.newTabElm = elm;
   },
   get groupCloseElm () {
@@ -185,7 +185,7 @@ var contextMenu = {
   },
   get reloadAllTabsElm () {
     var elm = document.getElementById("panoContextMenu_reloadAllTabs");
-    delete reloadAllTabsElm;
+    delete this.reloadAllTabsElm;
     return this.reloadAllTabsElm = elm;
   },
   currentItem: null,

@@ -38,7 +38,6 @@ var gPanoramaTree = {
   },
   destroy: function PT_destroy () {
     this.view.destroy();
-    Services.prefs.removeObserver(this.PREF_SWITCH_BY, this);
     if (this.tabbar.pref) {
       this.tabbar.toolbar.style.visibility = "visible";
     }
