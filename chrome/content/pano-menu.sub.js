@@ -89,12 +89,12 @@ function onPopupShowing (aEvent) {
       var GI = TabView._window.GroupItems;
       var currentGroup = GI.getActiveGroupItem();
       for (let [, group] in Iterator(GI.groupItems)) {
-        if (group !== currentGroup) {
-          popup.appendChild(createElement("menuitem", {
-            label: group.getTitle() || group.id,
-            value: group.id,
-          }));
-        }
+        popup.appendChild(createElement("menuitem", {
+          label: group.getTitle() || group.id,
+          value: group.id,
+          type: "radio",
+          checked: (group == currentGroup)
+        }));
       }
     });
   }
