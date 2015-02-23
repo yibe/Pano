@@ -24,6 +24,9 @@ function onPopupShowing (aEvent) {
   if (view)
     return;
 
+  if (!window.__SSi)
+    return;
+
   TabView._initFrame(function() {
     tree.view = view = new PanoramaTreeView(window);
     onPopupShown();

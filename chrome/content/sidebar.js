@@ -30,14 +30,34 @@ var gWin = window.QueryInterface(Ci.nsIInterfaceRequestor)
  */
 var gPanoramaTree = {
   gBrowser: gWin.gBrowser,
+  _timer: null,
   init: function PT_init () {
     Cu.import("resource://pano/panoramaTree.jsm", this);
-    gWin.TabView._initFrame(this.tabViewCallback.bind(this));
+
+    if (gWin.__SSi) {
+      gWin.TabView._initFrame(this.tabViewCallback.bind(this));
+    } else {
+      this._timer = gWin.setInterval(() => {
+        if (gWin.__SSi) {
+          gWin.clearInterval(this._timer);
+          this._timer = null;
+          gWin.TabView._initFrame(this.tabViewCallback.bind(this));
+        }
+      }, 500);
+    }
+
     Services.scriptloader.loadSubScript("chrome://pano/content/pano-tree.sub.js", this);
     this.tabbar.init();
   },
   destroy: function PT_destroy () {
-    this.view.destroy();
+    if (this._timer) {
+      gWin.clearInterval(this._timer);
+      this._timer = null;
+    }
+    if (this.view) {
+      this.view.destroy();
+      this.view = null;
+    }
     if (this.tabbar.pref) {
       this.tabbar.toolbar.style.visibility = "visible";
     }

@@ -60,6 +60,12 @@ function onPopupShowing (aEvent) {
     return;
 
   aEvent.stopPropagation();
+
+  if (!window.__SSi) {
+    aEvent.preventDefault();
+    return;
+  }
+
   if (popup.id === "pano-alltabs-group-popup") {
     if (groupsNumber.getAttribute("groups") < 2) {
       aEvent.preventDefault();
