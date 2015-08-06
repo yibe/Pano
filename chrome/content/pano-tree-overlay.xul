@@ -50,6 +50,17 @@
             accesskey="C"
             command="panoCmdClose"
             insertbefore="panoContextMenuSep"/>
+  <menu id="panoContextMenu_moveToGroup"
+        label="&menu.moveToGroup;"
+        insertbefore="panoContextMenuSep">
+    <menupopup id="panoContextMenu_moveToGroupPopup"
+               onpopupshowing="gPanoramaTree.contextMenu.moveToGroupPopupShowing(event);">
+      <menuseparator id="panoContextMenu_moveToGroupSep"/>
+      <menuitem id="panoContextMenu_moveToNewGroup"
+                command="panoCmdMoveToNewGroup"
+                label="&menu.moveToNewGroup;"/>
+    </menupopup>
+  </menu>
 </menupopup>
 
 <menu id="panoContextMenu_toolbar"

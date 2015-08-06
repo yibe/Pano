@@ -188,6 +188,11 @@ var contextMenu = {
     delete this.reloadAllTabsElm;
     return this.reloadAllTabsElm = elm;
   },
+  get moveToGroupElm () {
+    var elm = document.getElementById("panoContextMenu_moveToGroup");
+    delete this.moveToGroupElm;
+    return this.moveToGroupElm = elm;
+  },
   currentItem: null,
   build: function buildContextMenu (aEvent) {
     if (aEvent.target.id !== "panoContextMenu")
@@ -203,12 +208,14 @@ var contextMenu = {
       this.showItem("hibernateElm", true);
       this.showItem("bookmarksAllTabsElm", true);
       this.showItem("reloadAllTabsElm", true);
+      this.showItem("moveToGroupElm", isTabItem);
     } else {
       this.showItem("hibernateElm", false);
       this.showItem("bookmarksAllTabsElm", false);
       this.showItem("reloadAllTabsElm", false);
       this.showItem("groupCloseElm", false);
       this.showItem("tabCloseElm", false);
+      this.showItem("moveToGroupElm", false);
     }
   },
   showItem: function showMenuItem (aID, aShow) {
@@ -331,6 +338,73 @@ var contextMenu = {
       b.reload();
     });
   },
+  moveToGroupPopupShowing: function (aEvent) {
+    let popup = aEvent.target;
+    let separator = document.getElementById("panoContextMenu_moveToGroupSep");
+
+    while (popup.firstChild && popup.firstChild != separator)
+      popup.removeChild(popup.firstChild);
+
+    let groupItems = view.tabView._window.GroupItems.groupItems;
+    for (let groupItem of groupItems) {
+      if (groupItem.hidden)
+        continue;
+
+      let groupId = groupItem.id;
+      let menuItem = document.createElement("menuitem");
+      menuItem.addEventListener("command", () => {
+        this.moveToGroup(groupId);
+      }, false);
+      menuItem.setAttribute("label", groupItem.getTitle() || groupId);
+      popup.insertBefore(menuItem, separator);
+    }
+  },
+  moveToGroup: function (groupId) {
+    let item = this.currentItem;
+    if (!item)
+      return;
+
+    let selectedItems = view.getSelectedItems();
+    let tabs = selectedItems
+          .filter(function (item) item.type & TAB_ITEM_TYPE)
+          .map(function (item) item.tab);
+
+    if (tabs.length == 0)
+      return;
+
+    if (!groupId)
+      groupId = view.GI.newGroup().id;
+
+    let selectedTab = null;
+    let nextTab = null;
+    tabs.forEach(function (tab, index) {
+      if (tab.selected && index < tabs.length - 1) {
+        selectedTab = tab;
+        nextTab = tabs[index + 1];
+        return;
+      }
+      if (tab.pinned)
+        gBrowser.unpinTab(tab);
+      view.GI.moveTabToGroupItem(tab, groupId);
+      gBrowser.moveTabTo(tab, gBrowser.tabs.length - 1);
+    });
+
+    if (selectedTab) {
+      if (selectedTab.pinned)
+        gBrowser.unpinTab(selectedTab);
+      view.GI.moveTabToGroupItem(selectedTab, groupId);
+
+      let index = nextTab._tPos;
+      if (selectedTab._tPos < index)
+        index = index - 1;
+      gBrowser.moveTabTo(selectedTab, index);
+    }
+
+    view.selection.clearSelection();
+  },
+  moveToNewGroup: function () {
+    this.moveToGroup(null);
+  }
 };
 
 function expandAll () {

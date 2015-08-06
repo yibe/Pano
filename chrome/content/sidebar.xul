@@ -25,6 +25,7 @@
     <command id="panoCmdCloseEmptyGroups" oncommand="gPanoramaTree.closeEmptyGroups();"/>
     <command id="panoCmdExportSessions" oncommand="gPanoramaTree.exportSessions();"/>
     <command id="panoCmdImportSessions" oncommand="gPanoramaTree.importSessions();"/>
+    <command id="panoCmdMoveToNewGroup" oncommand="gPanoramaTree.contextMenu.moveToNewGroup();"/>
   </commandset>
   <keyset id="panoKeySet">
     <key keycode="VK_RETURN" oncommand="gPanoramaTree.selectTab()"/>
