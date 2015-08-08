@@ -967,13 +967,20 @@ PanoramaTreeView.prototype = {
         i = 0;
     for (; i < this.rows.length; ++i) {
       let row = this.rows[i];
-      if (row.type & TAB_GROUP_TYPE) {
-        if (aButOpenCurrentGroup && row.group === activeGroup) {
+      if (!(row.type & TAB_GROUP_TYPE))
+        continue;
+
+      if (aButOpenCurrentGroup) {
+        let isAppTabGroup = (row.type & APPTAB_GROUP_TYPE);
+        if (row.group === activeGroup ||
+            (isAppTabGroup && this.gBrowser.selectedTab.pinned)) {
           if (!row.isOpen)
             this.toggleOpenState(i);
-        } else if (row.isOpen) {
+        } else if (row.isOpen && !isAppTabGroup) {
           this.toggleOpenState(i);
         }
+      } else if (row.isOpen) {
+        this.toggleOpenState(i);
       }
     }
   },
