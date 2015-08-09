@@ -18,7 +18,7 @@
                autoCheck="false"
                label="&tabgroup.label;"
                group="sidebar"
-               oncommand="toggleSidebar('viewPanoramaSidebar')"
+               oncommand="SidebarUI.toggle('viewPanoramaSidebar')"
                sidebarurl="chrome://pano/content/sidebar.xul"/>
 </broadcasterset>
 <keyset id="mainKeyset">

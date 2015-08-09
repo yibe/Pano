@@ -54,7 +54,7 @@
       <menuseparator/>
       <menuitem id="panoContextMenu_sidebarClose"
                 label="&menu.closeSidebar;" accesskey="W"
-                oncommand="gWin.toggleSidebar()"/>
+                oncommand="gWin.SidebarUI.toggle()"/>
     </menupopup>
     <menupopup id="panoToolbarContextMenu"
                onpopupshowing="gToolbarContextMenu.onPopupShowing(event);"
