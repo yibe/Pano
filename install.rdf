@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RDF xmlns:em="http://www.mozilla.org/2004/em-rdf#" xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
   <Description about="urn:mozilla:install-manifest">
-    <em:id>pano@teramako.github.com</em:id>
+    <em:id>pano@yibe.addons.mozilla.org</em:id>
     <em:type>2</em:type>
-    <em:name>Pano</em:name>
-    <em:version>1.3pre</em:version>
+    <em:name>Pano (modified)</em:name>
+    <em:version>1.3pre.2015081602</em:version>
     <em:creator>teramako</em:creator>
     <em:description>Show TabGroup list</em:description>
 
     <em:optionsURL>chrome://pano/content/preferences.xul</em:optionsURL>
-    <em:homepageURL>https://github.com/teramako/Pano</em:homepageURL>
+    <em:homepageURL>https://github.com/yibe/Pano</em:homepageURL>
     <em:iconURL>chrome://pano/content/pano.svg</em:iconURL>
 
     <em:contributor>Higmmer</em:contributor>
@@ -30,8 +30,8 @@
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-        <em:minVersion>24.0</em:minVersion>
-        <em:maxVersion>32.0a1</em:maxVersion>
+        <em:minVersion>38.0</em:minVersion>
+        <em:maxVersion>42.0a1</em:maxVersion>
       </Description>
     </em:targetApplication>
   </Description>
