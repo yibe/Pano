@@ -136,7 +136,7 @@ GroupItem.prototype = Object.create(ItemPrototype, {
       for (let [, tabItem] in Iterator(this.group._children)) {
         tabs.push(new TabItem(tabItem.tab));
       }
-      return tabs;
+      return tabs.sort(function (a, b) a.tab._tPos - b.tab._tPos);
     },
   },
   hasChild: {
@@ -185,6 +185,9 @@ const HANDLE_EVENT_TYPES = [
   "TabOpen",
   "TabClose",
   "TabMove",
+  "TabSelect",
+  "TabPinned",
+  "TabUnpinned",
   "TabGroupMove",
   "TabGroupAdded",
   "TabGroupClose",
@@ -193,10 +196,42 @@ const HANDLE_EVENT_TYPES = [
 ];
 
 function Pano_moveTabToGroupItem (tab, groupItemId) {
-  this.originalMoveTabToGroupItem(tab, groupItemId);
+  if (tab.pinned)
+    return;
+
+  if (tab._tabViewTabItem.parent &&
+      tab._tabViewTabItem.parent.id == groupItemId)
+    return;
+
   var event = tab.ownerDocument.createEvent("Events");
   event.initEvent("TabGroupMove", true, false);
-  tab.dispatchEvent(event);
+
+  if (groupItemId) {
+    let groupItem = this.groupItem(groupItemId);
+    if (groupItem) {
+      let tabViewUI = groupItem.container.ownerDocument.defaultView.UI;
+      if (!tabViewUI.isTabViewVisible()) {
+        let index = tabViewUI._reorderTabItemsOnShow.indexOf(groupItem);
+        if (index != -1) {
+          tabViewUI._reorderTabItemsOnShow.splice(index, 1);
+          groupItem.reorderTabItemsBasedOnTabOrder();
+        }
+      }
+
+      // fire the TabGroupMove event before the original function
+      // calls reorderTabsBasedOnTabItemOrder().
+      let callback = function (item, info) {
+        if (info.item.tab == tab)
+          tab.dispatchEvent(event);
+      };
+      groupItem.addSubscriber("childAdded", callback);
+      this.originalMoveTabToGroupItem(tab, groupItemId);
+      groupItem.removeSubscriber("childAdded", callback);
+    }
+  } else {
+    this.originalMoveTabToGroupItem(tab, groupItemId);
+    tab.dispatchEvent(event);
+  }
 }
 
 function Pano_registerGroup (groupItem) {
@@ -229,6 +264,7 @@ function PanoramaTreeView (gWindow) {
   this.tabView = gWindow.TabView;
   this.gBrowser = gWindow.gBrowser;
   this.GI = gWindow.TabView._window.GroupItems;
+  this.activeGroupItem = this.GI.getActiveGroupItem();
   this.treeBox = null;
   this.rows = [];
   this.tabsObserver = new this.gWindow.MutationObserver(list => {
@@ -245,7 +281,6 @@ function PanoramaTreeView (gWindow) {
           tabItem.title = tab.label;
           break;
         case "pinned":
-          this.onTabMove(tab);
         case "titlechanged":
         case "unread":
         case "pending":
@@ -262,7 +297,6 @@ function PanoramaTreeView (gWindow) {
           break;
         case "selected":
           if (tab.hasAttribute(attrName)) {
-            this.onTabSelect();
             tabItem.propertySet.add("currentTab");
           } else
             tabItem.propertySet.delete("currentTab");
@@ -569,7 +603,10 @@ PanoramaTreeView.prototype = {
     return -1;
   },
   getIndexOfGroupForTab: function PTV_getIndexOfGroupForTab (tab, group) {
-    return group._children.indexOf(tab._tabViewTabItem);
+    return group.getChildren()
+      .map(function (tabItem) tabItem.tab)
+      .sort(function (a, b) a._tPos - b._tPos)
+      .indexOf(tab);
   },
   getItemFromEvent: function PTV_getItemFromEvent (aEvent) {
     var row = {}, col = {}, elt = {};
@@ -731,7 +768,7 @@ PanoramaTreeView.prototype = {
     } else {
       groupItem = targetItem;
       if (aOrientation === Ci.nsITreeView.DROP_AFTER && "group" in groupItem) {
-        let tabItem = groupItem.group._children[0];
+        let tabItem = groupItem.children[0];
         if (tabItem)
           tPos = tabItem.tab._tPos;
       }
@@ -973,7 +1010,7 @@ PanoramaTreeView.prototype = {
     case "TabUnpinned":
     case "TabMove":
     case "TabGroupMove":
-      this.onTabMove(aEvent.target);
+      this.onTabMove(aEvent);
       break;
     case "TabSelect":
       this.onTabSelect(aEvent);
@@ -1023,7 +1060,6 @@ PanoramaTreeView.prototype = {
       if (tabItem.parent) {
         // グループに属しているタブ
         let group = this.rows[groupRow].group;
-        group._children.sort(function(a, b) a.tab._tPos - b.tab._tPos);
         let tabIndex = this.getIndexOfGroupForTab(tab, group);
         changeIndex = groupRow + tabIndex + 1;
         this.rows.splice(changeIndex, 0, new TabItem(tab));
@@ -1059,7 +1095,17 @@ PanoramaTreeView.prototype = {
     }
 
   },
-  onTabMove: function PTV_onTabMove (tab) {
+  onTabMove: function PTV_onTabMove (aEvent) {
+    let tab = aEvent.target;
+
+    if (aEvent.type == "TabMove" && tab.hidden && tab._tabViewTabItem) {
+      let tabViewUI = this.tabView.getContentWindow().UI;
+      if (!tabViewUI.isTabViewVisible()) {
+        let groupItem = tab._tabViewTabItem.parent;
+        tabViewUI.setReorderTabItemsOnShow(groupItem);
+      }
+    }
+
     if (this.filter)
       return;
 
@@ -1075,7 +1121,6 @@ PanoramaTreeView.prototype = {
       else {
         let group = tab._tabViewTabItem.parent;
         if (group) {
-          group._children.sort(function(a,b) a.tab._tPos - b.tab._tPos);
           let groupRow = self.getRowForGroup(group);
           let tabIndex = self.getIndexOfGroupForTab(tab, group);
           insertedRow = groupRow + tabIndex + 1;
@@ -1109,6 +1154,18 @@ PanoramaTreeView.prototype = {
     }
   },
   onTabSelect: function PTV_onTabSelect (aEvent) {
+    let activeGroupItem = this.GI.getActiveGroupItem();
+    if (activeGroupItem && activeGroupItem != this.activeGroupItem) {
+      let tabViewUI = this.tabView.getContentWindow().UI;
+      if (!tabViewUI.isTabViewVisible()) {
+        for (let groupItem of tabViewUI._reorderTabItemsOnShow)
+          groupItem.reorderTabItemsBasedOnTabOrder();
+
+        tabViewUI._reorderTabItemsOnShow = [];
+      }
+    }
+    this.activeGroupItem = activeGroupItem;
+
     if (Services.prefs.getBoolPref(PREF_AUTO_COLLAPSE))
       this.collapseAll(true);
 
