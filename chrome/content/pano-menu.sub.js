@@ -16,7 +16,6 @@ function createMenu (aGroupItem) {
   });
   menu.appendChild(createElement("menupopup", {
     value: groupId,
-    onpopupshowing: "gPano.tabGroups.onPopupShowing(event);",
   }));
   return menu;
 };
