@@ -137,10 +137,11 @@ var tooltip = {
       this.urlElm.setAttribute("crop", "center");
       this.imageElm.style.removeProperty("visibility");
       var browser = item.tab.linkedBrowser;
-      let ({ width, height } = browser.boxObject,
-           boxWidth = parseInt(window.getComputedStyle(this.imageElm, "").width, 10)) {
-        this.imageElm.style.height = Math.round(boxWidth * height / width) + "px";
-      }
+
+      let { width, height } = browser.boxObject;
+      let boxWidth = parseInt(window.getComputedStyle(this.imageElm, "").width, 10);
+      this.imageElm.style.height = Math.round(boxWidth * height / width) + "px";
+
       if (browser.__SS_restoreState) {
         if (item.tab._tabViewTabItem)
           document.mozSetImageElement("panoTabCapture", item.tab._tabViewTabItem.$cachedThumb[0]);

@@ -53,12 +53,12 @@ XPCOMUtils.defineLazyModuleGetter(gPano, "styler", "resource://pano/panoStyle.js
 window.addEventListener("load", function () {
   window.removeEventListener("load", arguments.callee, false);
 
-  let (styler = gPano.styler, cssFile = gPano.styler.getCSSFile()) {
-    if (cssFile.exists() && cssFile.isReadable())
-      styler.load(cssFile);
-    else
-      styler.load(styler.defaultCSS);
-  }
+  let styler = gPano.styler;
+  let cssFile = styler.getCSSFile();
+  if (cssFile.exists() && cssFile.isReadable())
+    styler.load(cssFile);
+  else
+    styler.load(styler.defaultCSS);
 
   var allTabsButton = document.getElementById("alltabs-button") ||
                       getNavToolbox().palette.querySelector("#alltabs-button");
