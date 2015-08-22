@@ -1,5 +1,6 @@
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUIUtils", "resource://gre/modules/PlacesUIUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PageThumbs", "resource://gre/modules/PageThumbs.jsm");
 XPCOMUtils.defineLazyGetter(this, "stringBundle", function() {
   return Services.strings.createBundle("chrome://pano/locale/pano-tree.properties");
 });
@@ -136,11 +137,13 @@ var tooltip = {
       this.titleElm.setAttribute("crop", "center");
       this.urlElm.setAttribute("crop", "center");
       this.imageElm.style.removeProperty("visibility");
+      document.mozSetImageElement("panoTabCapture", null);
       var browser = item.tab.linkedBrowser;
 
       let { width, height } = browser.boxObject;
       let boxWidth = parseInt(window.getComputedStyle(this.imageElm, "").width, 10);
-      this.imageElm.style.height = Math.round(boxWidth * height / width) + "px";
+      let boxHeight = Math.round(boxWidth * height / width);
+      this.imageElm.style.height = boxHeight + "px";
 
       if (browser.__SS_restoreState) {
         if (item.tab._tabViewTabItem)
@@ -148,7 +151,12 @@ var tooltip = {
         else
           this.imageElm.style.setProperty("visibility", "collapse", "");
       } else {
-        document.mozSetImageElement("panoTabCapture", browser);
+        let canvas = PageThumbs.createCanvas();
+        canvas.width = boxWidth;
+        canvas.height = boxHeight;
+        PageThumbs.captureToCanvas(browser, canvas, function () {
+          document.mozSetImageElement("panoTabCapture", canvas);
+        });
       }
     } else {
       this.imageElm.style.setProperty("visibility", "collapse", "");
