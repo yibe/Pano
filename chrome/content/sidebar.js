@@ -129,7 +129,9 @@ var gPanoramaTree = {
  * @memberOf gPanoramaTree
  * @type {Element}
  */
-XPCOMUtils.defineLazyGetter(gPanoramaTree, "tree", function () document.getElementById("panoTabGroupTree"));
+XPCOMUtils.defineLazyGetter(gPanoramaTree, "tree", function () {
+  return document.getElementById("panoTabGroupTree");
+});
 
 XPCOMUtils.defineLazyGetter(this, "gSubFrame", function () {
   var container = {};

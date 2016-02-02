@@ -111,8 +111,12 @@ var tooltip = {
     delete this.imageElm;
     return this.imageElm = elm;
   },
-  get showThumbnail () Services.prefs.getBoolPref(PREF_TOOLTIP_SHOW_THUMBNAIL),
-  get showTitle () Services.prefs.getBoolPref(PREF_TOOLTIP_SHOW_TITLE),
+  get showThumbnail () {
+    return Services.prefs.getBoolPref(PREF_TOOLTIP_SHOW_THUMBNAIL);
+  },
+  get showTitle () {
+    return Services.prefs.getBoolPref(PREF_TOOLTIP_SHOW_TITLE);
+  },
   build: function buildTooltip (aEvent) {
     aEvent.stopPropagation();
     if (contextMenu.currentItem) {
@@ -323,7 +327,8 @@ var contextMenu = {
     if (tabs.length == 1)
       window.top.PlacesCommandHook.bookmarkPage(tabs[0].linkedBrowser, window.top.PlacesUtils.bookmarksMenuFolderId, true);
     else if (tabs.length > 1)
-      PlacesUIUtils.showMinimalAddMultiBookmarkUI(tabs.map(function(tab) tab.linkedBrowser.currentURI));
+      PlacesUIUtils.showMinimalAddMultiBookmarkUI(
+        tabs.map(tab => tab.linkedBrowser.currentURI));
   },
   reloadAllTabs: function PT_reloadAllTabs () {
     var item = this.currentItem;
@@ -375,8 +380,8 @@ var contextMenu = {
 
     let selectedItems = view.getSelectedItems();
     let tabs = selectedItems
-          .filter(function (item) item.type & TAB_ITEM_TYPE)
-          .map(function (item) item.tab);
+          .filter(item => item.type & TAB_ITEM_TYPE)
+          .map(item => item.tab);
 
     if (tabs.length == 0)
       return;

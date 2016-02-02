@@ -136,7 +136,7 @@ GroupItem.prototype = Object.create(ItemPrototype, {
       for (let [, tabItem] in Iterator(this.group._children)) {
         tabs.push(new TabItem(tabItem.tab));
       }
-      return tabs.sort(function (a, b) a.tab._tPos - b.tab._tPos);
+      return tabs.sort((a, b) => a.tab._tPos - b.tab._tPos);
     },
   },
   hasChild: {
@@ -604,8 +604,8 @@ PanoramaTreeView.prototype = {
   },
   getIndexOfGroupForTab: function PTV_getIndexOfGroupForTab (tab, group) {
     return group.getChildren()
-      .map(function (tabItem) tabItem.tab)
-      .sort(function (a, b) a._tPos - b._tPos)
+      .map(tabItem => tabItem.tab)
+      .sort((a, b) => a._tPos - b._tPos)
       .indexOf(tab);
   },
   getItemFromEvent: function PTV_getItemFromEvent (aEvent) {
@@ -1383,7 +1383,7 @@ PanoramaTreeView.onDragStart = function PTV_onDragStart (aEvent, view) {
     dt.mozSetDataAt(GROUP_DROP_TYPE, items[0].group, 0);
   }
   else {
-    items = items.filter(function(item) (item.type & TAB_ITEM_TYPE) > 0);
+    items = items.filter(item => (item.type & TAB_ITEM_TYPE) > 0);
 
     const aspectRatio = 0.5625; // 16:9
     var canvas = view.tabView._window.document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");

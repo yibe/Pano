@@ -102,7 +102,7 @@ function onPopupShowing (aEvent) {
     TabView._initFrame(function () {
       var group = TabView._window.GroupItems.groupItem(groupId);
       var tabItems = group.getChildren().concat()
-            .sort(function (a, b) a.tab._tPos - b.tab._tPos);
+            .sort((a, b) => a.tab._tPos - b.tab._tPos);
       for (let [, tabItem] in Iterator(tabItems)) {
         popup.appendChild(createMenuItem(tabItem));
       }
