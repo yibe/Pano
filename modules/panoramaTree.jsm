@@ -49,6 +49,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUIUtils", "resource://gre/modules
  */
 XPCOMUtils.defineLazyModuleGetter(this, "FileIO", "resource://pano/fileIO.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(
+  this, "AddonManager", "resource://gre/modules/AddonManager.jsm");
+
 XPCOMUtils.defineLazyServiceGetter(this, "atomService", "@mozilla.org/atom-service;1", "nsIAtomService");
 XPCOMUtils.defineLazyServiceGetter(this, "SessionStore", "@mozilla.org/browser/sessionstore;1", "nsISessionStore");
 XPCOMUtils.defineLazyGetter(this, "bundle", function () {
@@ -108,10 +111,8 @@ function GroupItem (group, session) {
   this.group = group;
   this.propertySet = new Set(["group"]);
   this.buildProperties();
-  if (group.addSubscriber.length > 2)
-    group.addSubscriber(this, "close", Pano_dispatchGroupCloseEvent);
-  else
-    group.addSubscriber("close", Pano_dispatchGroupCloseEvent);
+  group.addSubscriber(
+    "close", Pano_dispatchGroupCloseEvent.bind(null, group));
 
   if (session && ("openState" in session))
     this.isOpen = !!session.openState;
@@ -220,7 +221,7 @@ function Pano_moveTabToGroupItem (tab, groupItemId) {
 
       // fire the TabGroupMove event before the original function
       // calls reorderTabsBasedOnTabItemOrder().
-      let callback = function (item, info) {
+      let callback = function (info) {
         if (info.item.tab == tab)
           tab.dispatchEvent(event);
       };
@@ -236,22 +237,23 @@ function Pano_moveTabToGroupItem (tab, groupItemId) {
 
 function Pano_registerGroup (groupItem) {
   this.originalRegister(groupItem);
-  var win = Components.utils.getGlobalForObject(groupItem),
-      event = win.gWindow.document.createEvent("CustomEvent");
-  event.initCustomEvent("TabGroupAdded", true, false, groupItem);
-  win.gBrowser.dispatchEvent(event);
+  var win = groupItem.container.ownerDocument.defaultView;
+  var event = new win.CustomEvent("TabGroupAdded", {
+    bubbles: true, cancelable: false, detail: groupItem
+  });
+  win.tabGroups.gBrowser.dispatchEvent(event);
 }
 
 /**
  * dipatch an Event when the group is closed
  */
-function Pano_dispatchGroupCloseEvent (groupItem, eventInfo) {
+function Pano_dispatchGroupCloseEvent (groupItem) {
   // get TabView window object
-  var win = Components.utils.getGlobalForObject(groupItem._children),
-      event = win.document.createEvent("CustomEvent");
-  // set groupItem.id to UIEvent.detail
-  event.initCustomEvent("TabGroupClose", true, false, groupItem);
-  win.gBrowser.dispatchEvent(event);
+  var win = groupItem.container.ownerDocument.defaultView;
+  var event = new win.CustomEvent("TabGroupClose", {
+    bubbles: true, cancelable: false, detail: groupItem
+  });
+  win.tabGroups.gBrowser.dispatchEvent(event);
 }
 
 /**
@@ -261,10 +263,7 @@ function Pano_dispatchGroupCloseEvent (groupItem, eventInfo) {
  */
 function PanoramaTreeView (gWindow) {
   this.gWindow = gWindow;
-  this.tabView = gWindow.TabView;
   this.gBrowser = gWindow.gBrowser;
-  this.GI = gWindow.TabView._window.GroupItems;
-  this.activeGroupItem = this.GI.getActiveGroupItem();
   this.treeBox = null;
   this.rows = [];
   this.tabsObserver = new this.gWindow.MutationObserver(list => {
@@ -313,7 +312,25 @@ function PanoramaTreeView (gWindow) {
     subtree: true,
     attributeFilter: ["label", "titlechanged", "unread", "pinned", "busy", "selected", "pending"],
   });
+
+  let onAddonChanged = () => {
+    if (this.gWindow.tabGroups != this.tabGroupsObj) {
+      this.deactivate();
+
+      if (this.gWindow.tabGroups)
+        this.activate();
+    }
+  };
+  this._addonListener = {
+    onEnabled: onAddonChanged,
+    onDisabled: onAddonChanged,
+    onInstalled: () => { this.gWindow.setTimeout(onAddonChanged, 0); },
+    onUninstalled: onAddonChanged
+  };
+
   this.inited = false;
+  this.destroyed = false;
+  this.active = false;
 }
 
 PanoramaTreeView.prototype = {
@@ -321,28 +338,76 @@ PanoramaTreeView.prototype = {
     if (this.inited)
       return;
 
-    for (let [, type] in Iterator(HANDLE_EVENT_TYPES)) {
-      this.gWindow.addEventListener(type, this, false);
-    }
-    this.build();
-    var originalMoveTabToGroupItem = this.GI.moveTabToGroupItem;
-    if (originalMoveTabToGroupItem.name !== "Pano_moveTabToGroupItem") {
-      this.GI.originalMoveTabToGroupItem = originalMoveTabToGroupItem;
-      this.GI.moveTabToGroupItem = Pano_moveTabToGroupItem;
-    }
-    var originalRegister = this.GI.register;
-    if (originalRegister.name != "Pano_registerGroup") {
-      this.GI.originalRegister = originalRegister;
-      this.GI.register = Pano_registerGroup;
-    }
+    if (this.gWindow.tabGroups)
+      this.activate();
+
+    AddonManager.addAddonListener(this._addonListener);
+
     this.inited = true;
   },
   destroy: function PTV_destroy () {
-    for (let [, type] in Iterator(HANDLE_EVENT_TYPES)) {
+    this.deactivate();
+
+    if (this.tabsObserver) {
+      this.tabsObserver.disconnect();
+      this.tabsObserver = null;
+    }
+
+    AddonManager.removeAddonListener(this._addonListener);
+    this._addonListener = null;
+
+    this.treeBox = null;
+
+    this.destroyed = true;
+  },
+  activate() {
+    this.gWindow.tabGroups.TabView._initFrame(() => {
+      if (this.active || this.destroyed)
+        return;
+
+      this.tabView = this.gWindow.tabGroups.TabView;
+      this.GI = this.tabView.getContentWindow().GroupItems;
+      this.activeGroupItem = this.GI.getActiveGroupItem();
+      this.tabGroupsObj = this.gWindow.tabGroups;
+
+      for (let type of HANDLE_EVENT_TYPES) {
+        this.gWindow.addEventListener(type, this, false);
+      }
+
+      this.build();
+
+      var originalMoveTabToGroupItem = this.GI.moveTabToGroupItem;
+      if (originalMoveTabToGroupItem.name !== "Pano_moveTabToGroupItem") {
+        this.GI.originalMoveTabToGroupItem = originalMoveTabToGroupItem;
+        this.GI.moveTabToGroupItem = Pano_moveTabToGroupItem;
+      }
+      var originalRegister = this.GI.register;
+      if (originalRegister.name != "Pano_registerGroup") {
+        this.GI.originalRegister = originalRegister;
+        this.GI.register = Pano_registerGroup;
+      }
+
+      this.active = true;
+    });
+  },
+  deactivate() {
+    if (!this.active)
+      return;
+
+    this.tabView = null;
+    this.GI = null;
+    this.activeGroupItem = null;
+    this.tabGroupsObj = null;
+
+    for (let type of HANDLE_EVENT_TYPES) {
       this.gWindow.removeEventListener(type, this, false);
     }
-    this.tabsObserver.disconnect();
-    this.tabsObserver = null;
+
+    let count = this.rowCount;
+    this.rows = [];
+    this.treeBox.rowCountChanged(0, 0 - count);
+
+    this.active = false;
   },
   saveSession: function PTV_saveSession (aWindow) {
     if (!aWindow)
@@ -516,7 +581,7 @@ PanoramaTreeView.prototype = {
       aSession = this.getSession();
 
     var rows = [];
-    let item = new AppTabsGroup(this.tabView._window, aSession.apptabs);
+    let item = new AppTabsGroup(this.gWindow, aSession.apptabs);
     rows.push(item);
     if (item.isOpen)
       rows.push.apply(rows, item.children);
@@ -795,7 +860,7 @@ PanoramaTreeView.prototype = {
         addUrlsFromPlace(node, urls);
     }
 
-    if (urls.length === 0 || !PlacesUIUtils._confirmOpenInTabs(urls.length, this.tabView._window.gWindow))
+    if (urls.length === 0 || !PlacesUIUtils._confirmOpenInTabs(urls.length, this.gWindow))
       return;
 
     var [groupItem, tPos] = this.getDropPosition(aTargetIndex, aOrientation);
@@ -865,8 +930,8 @@ PanoramaTreeView.prototype = {
         let g = gi[j];
         data[g.id] = g.getStorageData();
       }
-      this.tabView._window.Storage._sessionStore.setWindowValue(this.tabView._window.gWindow,
-        "tabview-group", JSON.stringify(data));
+      SessionStore.setWindowValue(
+        this.gWindow, "tabview-group", JSON.stringify(data));
 
       this.treeBox.invalidate();
     }
@@ -1389,7 +1454,7 @@ PanoramaTreeView.onDragStart = function PTV_onDragStart (aEvent, view) {
     var canvas = view.tabView._window.document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
     canvas.mozOpaque = true;
     var offset = 15 * (items.length - 1);
-    var cWidth = Math.ceil(view.tabView._window.gWindow.screen.availWidth / 5.75);
+    var cWidth = Math.ceil(view.gWindow.screen.availWidth / 5.75);
     canvas.width = cWidth + offset;
     canvas.height = Math.round(cWidth * aspectRatio) + offset;
     var ctx = canvas.getContext("2d");

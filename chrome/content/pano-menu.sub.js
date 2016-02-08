@@ -1,4 +1,4 @@
-var groupsNumber = document.getElementById("tabviewGroupsNumber");
+var groupsNumber = document.getElementById("tabGroups-tabviewGroupsNumber");
 
 function createElement (aTagName, aAttributes) {
   var element = document.createElement(aTagName);
@@ -43,7 +43,7 @@ function selectGroup (aEvent) {
   var menuitem = aEvent.target;
   if (menuitem.localName === "menuitem" && menuitem.hasAttribute("value")) {
     let gID = menuitem.getAttribute("value");
-    let group = TabView._window.GroupItems.groupItem(gID);
+    let group = tabGroups.TabView._window.GroupItems.groupItem(gID);
     if (group) {
       let tabItem = group.getActiveTab() || group.getChild(0);
       if (tabItem) {
@@ -60,7 +60,7 @@ function onPopupShowing (aEvent) {
 
   aEvent.stopPropagation();
 
-  if (!window.__SSi) {
+  if (!window.tabGroups) {
     aEvent.preventDefault();
     return;
   }
@@ -70,8 +70,8 @@ function onPopupShowing (aEvent) {
       aEvent.preventDefault();
       return;
     }
-    TabView._initFrame(function () {
-      var GI = TabView._window.GroupItems;
+    tabGroups.TabView._initFrame(function () {
+      var GI = tabGroups.TabView._window.GroupItems;
       var currentGroup = GI.getActiveGroupItem();
       for (let [, group] in Iterator(GI.groupItems)) {
         if (group !== currentGroup)
@@ -84,8 +84,8 @@ function onPopupShowing (aEvent) {
       aEvent.preventDefault();
       return;
     }
-    TabView._initFrame(function () {
-      var GI = TabView._window.GroupItems;
+    tabGroups.TabView._initFrame(function () {
+      var GI = tabGroups.TabView._window.GroupItems;
       var currentGroup = GI.getActiveGroupItem();
       for (let [, group] in Iterator(GI.groupItems)) {
         popup.appendChild(createElement("menuitem", {
@@ -99,8 +99,8 @@ function onPopupShowing (aEvent) {
   }
   else if (popup.parentNode.parentNode.id === "pano-alltabs-group-popup") {
     let groupId = popup.getAttribute("value");
-    TabView._initFrame(function () {
-      var group = TabView._window.GroupItems.groupItem(groupId);
+    tabGroups.TabView._initFrame(function () {
+      var group = tabGroups.TabView._window.GroupItems.groupItem(groupId);
       var tabItems = group.getChildren().concat()
             .sort((a, b) => a.tab._tPos - b.tab._tPos);
       for (let [, tabItem] in Iterator(tabItems)) {

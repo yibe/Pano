@@ -1,7 +1,7 @@
 /**
  * @namespace
  */
-const gPano = {
+var gPano = {
   tabGroups: {
     onPopupShowing: function PanoMenu_init (aEvent) {
       var id = aEvent.target.id,

@@ -30,34 +30,21 @@ var gWin = window.QueryInterface(Ci.nsIInterfaceRequestor)
  */
 var gPanoramaTree = {
   gBrowser: gWin.gBrowser,
-  _timer: null,
+  view: null,
   init: function PT_init () {
     Cu.import("resource://pano/panoramaTree.jsm", this);
 
-    if (gWin.__SSi) {
-      gWin.TabView._initFrame(this.tabViewCallback.bind(this));
-    } else {
-      this._timer = gWin.setInterval(() => {
-        if (gWin.__SSi) {
-          gWin.clearInterval(this._timer);
-          this._timer = null;
-          gWin.TabView._initFrame(this.tabViewCallback.bind(this));
-        }
-      }, 500);
-    }
+    this.view = new this.PanoramaTreeView(gWin);
+    this.tree.view = this.view;
+    this.tree.focus();
 
     Services.scriptloader.loadSubScript("chrome://pano/content/pano-tree.sub.js", this);
     this.tabbar.init();
   },
   destroy: function PT_destroy () {
-    if (this._timer) {
-      gWin.clearInterval(this._timer);
-      this._timer = null;
-    }
-    if (this.view) {
-      this.view.destroy();
-      this.view = null;
-    }
+    this.view.destroy();
+    this.view = null;
+
     if (this.tabbar.pref) {
       this.tabbar.toolbar.style.visibility = "visible";
     }
@@ -65,12 +52,6 @@ var gPanoramaTree = {
     let splitter = document.getElementById("subFrameSplitter");
     if (splitter.getAttribute("state") !== "collapsed")
       splitter.setAttribute("state", "open");
-  },
-  view: null,
-  tabViewCallback: function PT_tabViewCallback () {
-    this.view = new this.PanoramaTreeView(gWin);
-    this.tree.view = this.view;
-    this.tree.focus();
   },
   isPanel: false,
   tabbar: {
