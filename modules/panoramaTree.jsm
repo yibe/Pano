@@ -86,7 +86,7 @@ AppTabsGroup.prototype = Object.create(ItemPrototype, {
   children: {
     get: function () {
       var tabs = [];
-      for (let [,tab] in Iterator(this.win.gBrowser.visibleTabs)) {
+      for (let tab of this.win.gBrowser.visibleTabs) {
         if (!tab.pinned)
           return tabs;
 
@@ -134,7 +134,7 @@ GroupItem.prototype = Object.create(ItemPrototype, {
   children: {
     get: function () {
       var tabs = [];
-      for (let [, tabItem] in Iterator(this.group._children)) {
+      for (let tabItem of this.group._children) {
         tabs.push(new TabItem(tabItem.tab));
       }
       return tabs.sort((a, b) => a.tab._tPos - b.tab._tPos);
@@ -418,7 +418,7 @@ PanoramaTreeView.prototype = {
       groups: {},
       groupOrder: [],
     };
-    for (let [, item] in Iterator(this.rows)) {
+    for (let item of this.rows) {
       switch (item.type) {
       case TAB_GROUP_TYPE:
         data.groups[item.id] = item.getSessionData();
@@ -513,7 +513,8 @@ PanoramaTreeView.prototype = {
           self.gWindow.setTimeout(delayedSetup, 50, tab, tabSession, groupID);
         }
       }
-      for (let [groupKey, groupData] in Iterator(data)) {
+      for (let groupKey in data) {
+        let groupData = data[groupKey];
         let group = null;
         if (groupKey !== "apptabs") {
           group = this.GI.groupItem(groupKey) ||
@@ -525,7 +526,7 @@ PanoramaTreeView.prototype = {
                   });
         }
         let isActiveGroup = (group !== null && group === activeGroup);
-        for (let [i, tabSession] in Iterator(groupData.tabs)) {
+        for (let [i, tabSession] of groupData.tabs.entries()) {
           let tab = this.gBrowser.addTab("about:blank", { skipAnimation: true });
           if (!isActiveGroup && !tabSession.pinned) {
             tab.setAttribute("hidden", "true");
@@ -593,7 +594,7 @@ PanoramaTreeView.prototype = {
         return (bIndex === -1) ? false : order.indexOf(a.id) > bIndex;
       });
     }
-    for (let [,group] in Iterator(this.GI.groupItems)) {
+    for (let group of this.GI.groupItems) {
       item = new GroupItem(group, aSession.groups[group.id]);
       rows.push(item);
       if (item.isOpen)
@@ -616,7 +617,7 @@ PanoramaTreeView.prototype = {
     if (!aGroup)
       return -1;
 
-    for (let [i, item] in Iterator(this.rows)) {
+    for (let [i, item] of this.rows.entries()) {
       if (item.type & TAB_GROUP_TYPE && item.group === aGroup) {
         return i;
       }
@@ -624,7 +625,7 @@ PanoramaTreeView.prototype = {
     return -1;
   },
   getRowForTab: function PTV_getRowForTab (aTab) {
-    for (let [i, item] in Iterator(this.rows)) {
+    for (let [i, item] of this.rows.entries()) {
       if (item.type & TAB_ITEM_TYPE && item.tab === aTab) {
         return i;
       }
@@ -690,7 +691,7 @@ PanoramaTreeView.prototype = {
   },
   getCurrentTabAndIndex: function PTV_getCurrentTabAndIndex () {
     var groupData = [null, -1];
-    for (let [i, item] in Iterator(this.rows)) {
+    for (let [i, item] of this.rows.entries()) {
       if (item.type & TAB_GROUP_TYPE && item.group === this.GI._activeGroupItem) {
         groupData = [item, i];
       } else if (item.type & TAB_ITEM_TYPE && item.tab.selected) {
@@ -1501,7 +1502,7 @@ function blob (aString, aOption) {
     throw new TypeError("arguments must be string");
 
   var regStr = "";
-  for (let [, char] in Iterator(aString)) {
+  for (let char of aString) {
     switch (char) {
     case "*":
       regStr += ".*";

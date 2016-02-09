@@ -255,7 +255,7 @@ var contextMenu = {
     var visibleTabs = gBrowser.visibleTabs;
     var tabs = [], groups = {};
 
-    for (let [, item] in Iterator(selectedItems)) {
+    for (let item of selectedItems) {
       if (item.type & TAB_ITEM_TYPE) {
         let tabItem = item.tab._tabViewTabItem;
         if (tabItem && tabItem.parent && (tabItem.parent.id in groups)) {
@@ -269,7 +269,8 @@ var contextMenu = {
     }
     const promptService = Cc["@mozilla.org/embedcomp/prompt-service;1"].getService(Ci.nsIPromptService);
     const PREF_CONFIRM_CLOSING_GROUP = "extensions.pano.confirm_closing_group";
-    for (let [id, item] in Iterator(groups)) {
+    for (let id in groups) {
+      let item = groups[id];
       let state = {};
       if (Services.prefs.getBoolPref(PREF_CONFIRM_CLOSING_GROUP)) {
         if (promptService.confirmCheck(window,

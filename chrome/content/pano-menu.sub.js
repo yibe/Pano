@@ -2,8 +2,8 @@ var groupsNumber = document.getElementById("tabGroups-tabviewGroupsNumber");
 
 function createElement (aTagName, aAttributes) {
   var element = document.createElement(aTagName);
-  for (let [name, value] in Iterator(aAttributes)) {
-    element.setAttribute(name, value);
+  for (let name in aAttributes) {
+    element.setAttribute(name, aAttributes[name]);
   }
   return element;
 }
@@ -73,7 +73,7 @@ function onPopupShowing (aEvent) {
     tabGroups.TabView._initFrame(function () {
       var GI = tabGroups.TabView._window.GroupItems;
       var currentGroup = GI.getActiveGroupItem();
-      for (let [, group] in Iterator(GI.groupItems)) {
+      for (let group of GI.groupItems) {
         if (group !== currentGroup)
           popup.appendChild(createMenu(group));
       }
@@ -87,7 +87,7 @@ function onPopupShowing (aEvent) {
     tabGroups.TabView._initFrame(function () {
       var GI = tabGroups.TabView._window.GroupItems;
       var currentGroup = GI.getActiveGroupItem();
-      for (let [, group] in Iterator(GI.groupItems)) {
+      for (let group of GI.groupItems) {
         popup.appendChild(createElement("menuitem", {
           label: group.getTitle() || group.id,
           value: group.id,
@@ -103,7 +103,7 @@ function onPopupShowing (aEvent) {
       var group = tabGroups.TabView._window.GroupItems.groupItem(groupId);
       var tabItems = group.getChildren().concat()
             .sort((a, b) => a.tab._tPos - b.tab._tPos);
-      for (let [, tabItem] in Iterator(tabItems)) {
+      for (let tabItem of tabItems) {
         popup.appendChild(createMenuItem(tabItem));
       }
     });
