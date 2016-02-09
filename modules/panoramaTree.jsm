@@ -64,7 +64,7 @@ var ItemPrototype = {
   id: 0,
   getSessionData: function () {},
   buildProperties: function PanoItem_buildProperties () {
-    return this.properties = [v for (v of this.propertySet)].join(" ");
+    return this.properties = Array.from(this.propertySet).join(" ");
   },
 };
 function AppTabsGroup (win, session) {
@@ -383,7 +383,7 @@ PanoramaTreeView.prototype = {
   },
   getExportableSessionData: function PTV_getExportableSessionData (aItems) {
     if (aItems.length < 1)
-      aItems = [item for ([, item] in Iterator(this.rows)) if (item.type & TAB_GROUP_TYPE)];
+      aItems = this.rows.filter(item => item.type & TAB_GROUP_TYPE);
 
     var tabItems = aItems.reduce(function(results, item) {
       if (item.type & TAB_GROUP_TYPE)
