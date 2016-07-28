@@ -212,9 +212,8 @@ function Pano_moveTabToGroupItem (tab, groupItemId) {
     if (groupItem) {
       let tabViewUI = groupItem.container.ownerDocument.defaultView.UI;
       if (!tabViewUI.isTabViewVisible()) {
-        let index = tabViewUI._reorderTabItemsOnShow.indexOf(groupItem);
-        if (index != -1) {
-          tabViewUI._reorderTabItemsOnShow.splice(index, 1);
+        if (tabViewUI._reorderTabItemsOnShow.has(groupItem)) {
+          tabViewUI._reorderTabItemsOnShow.delete(groupItem);
           groupItem.reorderTabItemsBasedOnTabOrder();
         }
       }
@@ -569,7 +568,7 @@ PanoramaTreeView.prototype = {
   },
   build: function PTV_build (aSession) {
     // when the sessionstore is busy, wait the sessionstore is ready then build
-    if (this.tabView._window.TabItems.reconnectingPaused()) {
+    if (this.tabView._window.TabItems.reconnectingPaused) {
       let self = this;
       let onSSWindowStateReady = function PTV_onSSWindowStateReady(aEvent) {
         aEvent.target.removeEventListener(aEvent.type, PTV_onSSWindowStateReady, false);
@@ -1234,7 +1233,7 @@ PanoramaTreeView.prototype = {
         for (let groupItem of tabViewUI._reorderTabItemsOnShow)
           groupItem.reorderTabItemsBasedOnTabOrder();
 
-        tabViewUI._reorderTabItemsOnShow = [];
+        tabViewUI._reorderTabItemsOnShow.clear();
       }
     }
     this.activeGroupItem = activeGroupItem;

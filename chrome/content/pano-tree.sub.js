@@ -141,20 +141,28 @@ var tooltip = {
       this.titleElm.setAttribute("crop", "center");
       this.urlElm.setAttribute("crop", "center");
       this.imageElm.style.removeProperty("visibility");
+      this.imageElm.style.removeProperty("height");
       document.mozSetImageElement("panoTabCapture", null);
       var browser = item.tab.linkedBrowser;
 
-      let { width, height } = browser.boxObject;
-      let boxWidth = parseInt(window.getComputedStyle(this.imageElm, "").width, 10);
-      let boxHeight = Math.round(boxWidth * height / width);
-      this.imageElm.style.height = boxHeight + "px";
-
       if (browser.__SS_restoreState) {
-        if (item.tab._tabViewTabItem)
-          document.mozSetImageElement("panoTabCapture", item.tab._tabViewTabItem.$cachedThumb[0]);
-        else
+        if (item.tab._tabViewTabItem) {
+          let thumbURL = PageThumbs.getThumbnailURL(item.url);
+          let img = new Image();
+          img.onload = () => {
+            this.imageElm.style.height = img.naturalHeight + "px";
+            document.mozSetImageElement("panoTabCapture", img);
+          };
+          img.src = thumbURL;
+        } else {
           this.imageElm.style.setProperty("visibility", "collapse", "");
+        }
       } else {
+        let { width, height } = browser.boxObject;
+        let boxWidth = parseInt(window.getComputedStyle(this.imageElm, "").width, 10);
+        let boxHeight = Math.round(boxWidth * height / width);
+        this.imageElm.style.height = boxHeight + "px";
+
         let canvas = PageThumbs.createCanvas();
         canvas.width = boxWidth;
         canvas.height = boxHeight;
