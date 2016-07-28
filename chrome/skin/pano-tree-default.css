@@ -40,8 +40,8 @@
 }
 /* group icon */
 .pano-tree treechildren::-moz-tree-image(group, primary) {
-  list-style-image: url("chrome://browser/skin/tabview/tabview.png");
-  -moz-image-region: rect(1px, 35px, 16px, 19px);
+  list-style-image: url("chrome://tabgroups-os/skin/Toolbar.png");
+  -moz-image-region: rect(0px, 18px, 18px, 0px);
 }
 /* AppTab group icon */
 .pano-tree treechildren::-moz-tree-image(group, primary, AppTabs) {
