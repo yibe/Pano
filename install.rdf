@@ -4,7 +4,7 @@
     <em:id>pano@yibe.addons.mozilla.org</em:id>
     <em:type>2</em:type>
     <em:name>Pano (modified)</em:name>
-    <em:version>1.3pre.2016021001</em:version>
+    <em:version>1.3pre.2017012801</em:version>
     <em:creator>teramako</em:creator>
     <em:description>Show TabGroup list</em:description>
 
@@ -31,7 +31,7 @@
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
         <em:minVersion>44.0a1</em:minVersion>
-        <em:maxVersion>47.0a1</em:maxVersion>
+        <em:maxVersion>54.0a1</em:maxVersion>
       </Description>
     </em:targetApplication>
 
