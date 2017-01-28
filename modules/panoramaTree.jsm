@@ -1459,29 +1459,34 @@ PanoramaTreeView.onDragStart = function PTV_onDragStart (aEvent, view) {
     canvas.height = Math.round(cWidth * aspectRatio) + offset;
     var ctx = canvas.getContext("2d");
 
-    for (let i = 0, len = items.length; i < len; ++i) {
-      let item = items[i];
+    for (let [i, item] of items.entries()) {
       dt.mozSetDataAt(TAB_DROP_TYPE, item.tab, i);
       dt.mozSetDataAt("text/x-moz-text-internal", item.url, i);
-
-      let win = item.tab.linkedBrowser.contentWindow;
-      let snippetWidth = win.innerWidth * 0.6;
-      // browser.sessionstore.max_concurrent_tabs が 0 の場合などで
-      // ドキュメントがロードされていない場合、
-      // innerWidth が 0 で、scale値がInfinityとなる
-      // canvas に書き込むのはスキップ
-      if (snippetWidth === 0)
-        continue;
-
-      let scale = cWidth / snippetWidth;
-      ctx.save();
-      ctx.translate(15 * i, 15 * i);
-      ctx.scale(scale, scale);
-      ctx.drawWindow(win, win.scrollX, win.scrollY, snippetWidth, snippetWidth * aspectRatio, "rgb(255,255,255)");
-      ctx.restore();
     }
 
-    dt.setDragImage(canvas, 0, 0);
+    // XXX it doesn't seem to be easy to make this work on e10s, see
+    // https://bugzil.la/1309596
+    if (!view.gWindow.gMultiProcessBrowser) {
+      for (let [i, item] of items.entries()) {
+        let win = item.tab.linkedBrowser.contentWindow;
+        let snippetWidth = win.innerWidth * 0.6;
+        // browser.sessionstore.max_concurrent_tabs が 0 の場合などで
+        // ドキュメントがロードされていない場合、
+        // innerWidth が 0 で、scale値がInfinityとなる
+        // canvas に書き込むのはスキップ
+        if (snippetWidth === 0)
+          continue;
+
+        let scale = cWidth / snippetWidth;
+        ctx.save();
+        ctx.translate(15 * i, 15 * i);
+        ctx.scale(scale, scale);
+        ctx.drawWindow(win, win.scrollX, win.scrollY, snippetWidth, snippetWidth * aspectRatio, "rgb(255,255,255)");
+        ctx.restore();
+      }
+
+      dt.setDragImage(canvas, 0, 0);
+    }
   }
   dt.effectAllowed = "move";
   aEvent.stopPropagation();

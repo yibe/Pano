@@ -34,5 +34,7 @@
         <em:maxVersion>47.0a1</em:maxVersion>
       </Description>
     </em:targetApplication>
+
+    <em:multiprocessCompatible>true</em:multiprocessCompatible>
   </Description>
 </RDF>
